@@ -26,7 +26,7 @@ void loop() {
 
   if (idx > 0) {
     Serial.print("Recebido do SLAVE: ");
-    Serial.println(buffer);
+    //Serial.println(buffer);
 
     // --- Separar temperatura e umidade ---
     float temperature = 0;
