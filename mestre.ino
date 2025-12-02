@@ -22,6 +22,25 @@ WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
 
+  void callback(char* topic, byte* payload, unsigned int length) {
+    // Convert payload to string for easier handling
+    payload[length] = '\0';
+    String message = (char*)payload;
+
+    // Handle messages based on topic
+    if (strcmp(topic, "slider") == 0) {
+      if (message == "on") {
+        Serial.println("slider on!");
+        // Turn on bedroom lights
+      } else if (message == "off") {
+        Serial.println("slider off!");
+        // Turn off bedroom lights
+      }
+    } else if (strcmp(topic, "slider") == 0) {
+      // Publish current temperature
+    }
+  }
+
 unsigned long lastMsg = 0;
 
 void connectWiFi() {
@@ -53,7 +72,7 @@ void setup() {
   Serial.begin(115200);
 
   Wire.begin();   // Master I2C (SDA/SCL padrão)
-
+  callback();
   Serial.println("Master I2C iniciado!");
 
   connectWiFi();
@@ -62,13 +81,16 @@ void setup() {
   client.setServer(mqtt_server, mqtt_port);
 
   connectMQTT();
+
+  mqttClient.setCallback(callback);
+  mqttClient.subscribe("slider");
 }
 
 void loop() {
   
     float temperature = 0;
     float humidity = 0;
-
+// ==================== MQTT ========================== //
   if (!client.connected()) {
     connectMQTT();
   }
@@ -76,31 +98,32 @@ void loop() {
 
   if (millis() - lastMsg > 2000) {  // publish every 2 seconds
     lastMsg = millis();
-  // --- Solicita dados ao Slave ---
-  Wire.requestFrom(SLAVE_ADDR, BUFFER_SIZE);
+    // ================= Solicita dados ao Slave ================= // 
+    Wire.requestFrom(SLAVE_ADDR, BUFFER_SIZE);
 
-  char buffer[BUFFER_SIZE + 1];
-  int idx = 0;
+    char buffer[BUFFER_SIZE + 1];
+    int idx = 0;
 
     while (Wire.available() && idx < BUFFER_SIZE) {
     buffer[idx++] = Wire.read();
     }
   buffer[idx] = '\0'; // finaliza string
 
+    // ================= Reconhece dados ao Slave ================= // 
     if (idx > 0) {
-    Serial.print("Recebido do SLAVE: ");
+      Serial.print("Recebido do SLAVE: ");
 
 
-    sscanf(buffer, "%f;%f", &temperature, &humidity);
+      sscanf(buffer, "%f;%f", &temperature, &humidity); // transforma dados em variaveis
 
-    Serial.print("Temperatura: ");
-    Serial.println(temperature);
+      //Serial.print("Temperatura: ");
+      //Serial.println(temperature);
 
-    Serial.print("Umidade: ");
-    Serial.println(humidity);
+      //Serial.print("Umidade: ");
+      //Serial.println(humidity);
 
-    char msg[80];
-    snprintf(msg, sizeof(msg), "{\"temp\": %.1f, \"humidity\": %.1f}", temperature, humidity);
+      char msg[80];
+      snprintf(msg, sizeof(msg), "{\"temp\": %.1f, \"humidity\": %.1f}", temperature, humidity); // transforma variaveis na msg
 
     if (client.publish(topic, msg)) {
       Serial.print("Published: ");
@@ -115,5 +138,4 @@ void loop() {
 
   delay(1500); // tempo entre leituras
   }
-
 }
