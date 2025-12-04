@@ -6,6 +6,9 @@
 #define SLAVE_ADDR 0x55   // endereço do ESP32 Slave
 #define BUFFER_SIZE 32
 
+
+int info = 0;
+
 // --- WiFi ---
 const char* ssid = "AG";
 const char* wifi_password = "qwerty12345";
@@ -16,30 +19,39 @@ const int   mqtt_port     = 8883;
 const char* mqtt_user     = "qwerty";
 const char* mqtt_password = "@Qwerty1";
 const char* topic         = "dht22";
+const char* topic1         = "slider";
 
 // --- TLS Client ---
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
 
-  void callback(char* topic, byte* payload, unsigned int length) {
-    // Convert payload to string for easier handling
-    payload[length] = '\0';
-    String message = (char*)payload;
+void callback(char* topic1, byte* payload, unsigned int length) {
+  // Convert payload to string for easier handling
+  payload[length] = '\0';
+  String message = (char*)payload;      
 
-    // Handle messages based on topic
-    if (strcmp(topic, "slider") == 0) {
-      if (message == "on") {
-        Serial.println("slider on!");
-        // Turn on bedroom lights
-      } else if (message == "off") {
-        Serial.println("slider off!");
-        // Turn off bedroom lights
-      }
-    } else if (strcmp(topic, "slider") == 0) {
-      // Publish current temperature
+  // Handle messages based on topic
+  if (strcmp(topic1, "slider") == 0) {
+    if (message == "on") {
+      Serial.println("slider on!");
+      Wire.beginTransmission(SLAVE_ADDR);
+      Wire.write(1);
+      Wire.endTransmission();
+      // Turn on bedroom lights
+    } else if (message == "off") {
+      Serial.println("slider off!");
+      Wire.beginTransmission(SLAVE_ADDR);
+      Wire.write(0);
+      Wire.endTransmission();
+      // Turn off bedroom lights
     }
+  } else if (strcmp(topic1, "slider") == 0) {
+    // Publish current temperature
   }
+}
+
+
 
 unsigned long lastMsg = 0;
 
@@ -72,7 +84,7 @@ void setup() {
   Serial.begin(115200);
 
   Wire.begin();   // Master I2C (SDA/SCL padrão)
-  callback();
+  //callback();
   Serial.println("Master I2C iniciado!");
 
   connectWiFi();
@@ -82,12 +94,11 @@ void setup() {
 
   connectMQTT();
 
-  mqttClient.setCallback(callback);
-  mqttClient.subscribe("slider");
+  client.setCallback(callback);
+  client.subscribe("slider");
 }
 
 void loop() {
-  
     float temperature = 0;
     float humidity = 0;
 // ==================== MQTT ========================== //

@@ -6,6 +6,8 @@
 
 #define I2C_DEV_ADDR 0x55   // endereço do ESP32 como SLAVE
 
+int led = 10;
+
 SensorDHT sensorDHT(DHTPIN, DHTTYPE);
 
 // Buffer que enviaremos ao Master
@@ -20,7 +22,13 @@ void onRequest() {
 void onReceive(int len) {
   Serial.printf("Master enviou %d bytes: ", len);
   while (Wire.available()) {
-    Serial.write(Wire.read());
+    int info = Wire.read();
+      if(info = 1){
+        digitalWrite(led, HIGH);
+      } else if(info = 0) {
+        digitalWrite(led, LOW);
+      }
+
   }
   Serial.println();
 }
@@ -29,6 +37,7 @@ void setup() {
   Serial.begin(115200);
   sensorDHT.begin();
 
+  pinMode(led, OUTPUT);
   // Inicializa como I2C Slave
   Wire.onReceive(onReceive);
   Wire.onRequest(onRequest);
