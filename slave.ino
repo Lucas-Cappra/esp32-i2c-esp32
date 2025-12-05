@@ -1,52 +1,63 @@
 #include <Wire.h>
 #include "SensorDHT.h"
 
-#define DHTPIN 4
-#define DHTTYPE DHT22
+// -------------------- CONFIGURAÇÕES --------------------
+#define DHTPIN 4            // Pino do DHT22
+#define DHTTYPE DHT22       // Tipo do sensor
+#define I2C_DEV_ADDR 0x55   // Endereço do ESP32 como SLAVE
+#define LED_PIN 2           // Pino seguro para LED no ESP32
 
-#define I2C_DEV_ADDR 0x55   // endereço do ESP32 como SLAVE
-
-int led = 10;
-
+// -------------------- VARIÁVEIS --------------------
 SensorDHT sensorDHT(DHTPIN, DHTTYPE);
+char i2cBuffer[32]; // Buffer que será enviado ao Master
 
-// Buffer que enviaremos ao Master
-char i2cBuffer[32];
+// -------------------- FUNÇÕES I2C --------------------
 
-// Quando o Master pedir dados (I2C request)
+// Chamado quando o Master pede dados (request)
 void onRequest() {
   Wire.slaveWrite((uint8_t*)i2cBuffer, strlen(i2cBuffer));
 }
 
-// Quando o Master enviar algo para o Slave (opcional)
+// Chamado quando o Master envia dados (receive)
 void onReceive(int len) {
   Serial.printf("Master enviou %d bytes: ", len);
   while (Wire.available()) {
-    int info = Wire.read();
-      if(info = 1){
-        digitalWrite(led, HIGH);
-      } else if(info = 0) {
-        digitalWrite(led, LOW);
-      }
+    int cmd = Wire.read();
 
+    if(cmd == 1){
+      digitalWrite(LED_PIN, HIGH); // Acende LED
+    } else if(cmd == 0){
+      digitalWrite(LED_PIN, LOW);  // Apaga LED
+    }
+
+    Serial.print(cmd);
+    Serial.print(" ");
   }
   Serial.println();
 }
 
+// -------------------- SETUP --------------------
 void setup() {
   Serial.begin(115200);
+
+  // Inicializa sensor DHT
   sensorDHT.begin();
 
-  pinMode(led, OUTPUT);
-  // Inicializa como I2C Slave
+  // Configura LED
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  // Inicializa I2C como Slave
   Wire.onReceive(onReceive);
   Wire.onRequest(onRequest);
-  Wire.begin((uint8_t)I2C_DEV_ADDR);
+  Wire.begin(I2C_DEV_ADDR);
 
   Serial.println("ESP32 pronto como I2C Slave!");
 }
 
+// -------------------- LOOP PRINCIPAL --------------------
 void loop() {
+  // Lê temperatura e umidade do DHT22
   float temperature = sensorDHT.readTemperature();
   float humidity = sensorDHT.readHumidity();
 
@@ -56,11 +67,11 @@ void loop() {
     return;
   }
 
-  // Formata a resposta que será enviada ao Master
+  // Formata dados para enviar ao Master
   snprintf(i2cBuffer, sizeof(i2cBuffer), "%.2f;%.2f", temperature, humidity);
 
   Serial.print("Atualizado buffer I2C -> ");
   Serial.println(i2cBuffer);
 
-  delay(2000); // Atualiza a cada 2s
+  delay(2000); // Atualiza a cada 2 segundos
 }
