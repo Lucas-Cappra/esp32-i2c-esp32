@@ -99,8 +99,8 @@ void setup() {
 }
 
 void loop() {
-    float temperature = 0;
-    float humidity = 0;
+    float temperature = 34;
+    float humidity = 15;
 // ==================== MQTT ========================== //
   if (!client.connected()) {
     connectMQTT();
@@ -125,7 +125,7 @@ void loop() {
       Serial.print("Recebido do SLAVE: ");
 
 
-      sscanf(buffer, "%f;%f", &temperature, &humidity); // transforma dados em variaveis
+      //sscanf(buffer, "%f;%f", &temperature, &humidity); // transforma dados em variaveis
 
       //Serial.print("Temperatura: ");
       //Serial.println(temperature);

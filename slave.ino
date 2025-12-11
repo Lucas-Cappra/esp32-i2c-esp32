@@ -1,14 +1,14 @@
 #include <Wire.h>
-#include "SensorDHT.h"
+//#include "SensorDHT.h"
 
 // -------------------- CONFIGURAÇÕES --------------------
-#define DHTPIN 4            // Pino do DHT22
+//#define DHTPIN 4            // Pino do DHT22
 #define DHTTYPE DHT22       // Tipo do sensor
 #define I2C_DEV_ADDR 0x55   // Endereço do ESP32 como SLAVE
 #define LED_PIN 2           // Pino seguro para LED no ESP32
 
 // -------------------- VARIÁVEIS --------------------
-SensorDHT sensorDHT(DHTPIN, DHTTYPE);
+//SensorDHT sensorDHT(DHTPIN, DHTTYPE);
 char i2cBuffer[32]; // Buffer que será enviado ao Master
 
 // -------------------- FUNÇÕES I2C --------------------
@@ -41,7 +41,7 @@ void setup() {
   Serial.begin(115200);
 
   // Inicializa sensor DHT
-  sensorDHT.begin();
+  //sensorDHT.begin();
 
   // Configura LED
   pinMode(LED_PIN, OUTPUT);
@@ -57,6 +57,7 @@ void setup() {
 
 // -------------------- LOOP PRINCIPAL --------------------
 void loop() {
+  /*
   // Lê temperatura e umidade do DHT22
   float temperature = sensorDHT.readTemperature();
   float humidity = sensorDHT.readHumidity();
@@ -69,7 +70,7 @@ void loop() {
 
   // Formata dados para enviar ao Master
   snprintf(i2cBuffer, sizeof(i2cBuffer), "%.2f;%.2f", temperature, humidity);
-
+*/
   Serial.print("Atualizado buffer I2C -> ");
   Serial.println(i2cBuffer);
 
